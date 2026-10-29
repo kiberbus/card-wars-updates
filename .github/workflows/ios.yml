@@ -15,6 +15,12 @@ jobs:
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
+      # Godot's iOS engine is built with the newest SDK (Xcode 26 for Godot 4.7): the default Xcode
+      # of the runner may be older and then misses its symbols.
+      - name: Newest Xcode
+        run: |
+          sudo xcode-select -s "$(ls -d /Applications/Xcode_*.app | grep -iv beta | sort -V | tail -1)"
+          xcodebuild -version
       - name: Build
         env:
           GH_TOKEN: ${{ github.token }}
