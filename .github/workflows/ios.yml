@@ -1,0 +1,25 @@
+# Builds the unsigned iOS app on a GitHub Mac. tools/publish.ps1 puts this file into the updates
+# repo as .github/workflows/ios.yml (with build_ipa.sh) and starts it: the release <tag> there holds
+# CardWars-ios-xcode-<build>.zip, the Xcode project Godot exports; CardWars-iOS.ipa goes back into it.
+name: ios
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: release with the Xcode project
+        required: true
+permissions:
+  contents: write
+jobs:
+  ipa:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern "CardWars-ios-xcode-*.zip" --dir in
+          sh build_ipa.sh in/CardWars-ios-xcode-*.zip "$PWD/CardWars-iOS.ipa"
+          gh release upload "$TAG" CardWars-iOS.ipa --repo "$GITHUB_REPOSITORY" --clobber
