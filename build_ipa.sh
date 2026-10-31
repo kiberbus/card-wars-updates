@@ -20,6 +20,17 @@ xcodebuild -project "$name.xcodeproj" -scheme "$name" -configuration Release -sd
     -destination "generic/platform=iOS" -derivedDataPath "$work/build" \
     CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" DEVELOPMENT_TEAM="" build
 app="$(find "$work/build/Build/Products" -maxdepth 2 -name '*.app' | head -1)"
+# Godot writes only one landscape side into Info.plist; the phone must turn both ways.
+python3 - "$app/Info.plist" <<'PY'
+import plistlib, sys
+landscapes = ["UIInterfaceOrientationLandscapeLeft", "UIInterfaceOrientationLandscapeRight"]
+with open(sys.argv[1], "rb") as f:
+    plist = plistlib.load(f)
+plist["UISupportedInterfaceOrientations"] = landscapes
+plist["UISupportedInterfaceOrientations~ipad"] = landscapes
+with open(sys.argv[1], "wb") as f:
+    plistlib.dump(plist, f)
+PY
 mkdir -p "$work/ipa/Payload"
 cp -R "$app" "$work/ipa/Payload/"
 rm -f "$out"
